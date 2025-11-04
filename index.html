@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="gameTitle">Викторина Мемов</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://yandex.ru/games/sdk/v2"></script>
+</head>
+<body>
+    
+    <!-- Экран загрузки -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <h2 class="loading-title">🎭 Викторина Мемов 🎭</h2>
+            <p class="loading-subtitle">Загружаем мемы стран СНГ...</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container" id="gameContainer" style="display: none;">
+        <header class="header">
+            <h1>🎭 Викторина Мемов 🎭</h1>
+            <p class="subtitle">Угадай название мема по картинке!</p>
+        </header>
+
+        <div class="game-info">
+            <div class="lives">
+                <span class="lives-label">Жизни:</span>
+                <div class="hearts">
+                    <span class="heart">❤️</span>
+                    <span class="heart">❤️</span>
+                    <span class="heart">❤️</span>
+                </div>
+            </div>
+    
+            <div class="controls"> 
+                <!-- Аудио без autoplay -->
+                <audio src="Sound/compress.mp3" id="soundOn"></audio>
+                <audio id="correct-answer-sample" src="Sound/correct-answer.mp3"></audio>
+                <audio id="wrong-answer-sample" src="Sound/wrong-answer.mp3"></audio>
+
+                <!-- Кнопка звука -->
+                <button id="soundBtn" class="control-btn" title="Включить звук">🔊</button>
+
+                <!-- Кнопка музыки -->
+                <button id="playbtn" class="control-btn" title="Включить музыку">▶️</button>
+
+                <button id="showAdBtn" class="control-btn" title="Реклама за бонус">📺</button>
+                <button id="shopBtn" class="control-btn" title="Магазин">🛒</button>
+            </div>
+            
+            <div class="level-info">
+                <div class="current-level">Уровень: <span id="currentLevel">1</span></div>
+                <div class="total-levels">Всего: <span id="totalLevels">50</span></div>
+            </div>
+        </div>
+
+        <!-- остальной HTML без изменений -->
+        <!-- ... -->
+
+    </div>
+
+    <!-- Фанфары -->
+    <div id="visual-fanfare" class="visual-fanfare" style="display: none;">
+        <div class="fanfare-text">🎉 Правильно! 🎉</div>
+    </div>
+
+    <script>
+        // Флаг: был ли первый пользовательский жест
+        let userGestureOccurred = false;
+        const bgMusic = document.getElementById('soundOn');
+        const correctSound = document.getElementById('correct-answer-sample');
+        const wrongSound = document.getElementById('wrong-answer-sample');
+
+        // Инициализация аудио после первого клика
+        function initAudio() {
+            if (userGestureOccurred) return;
+            userGestureOccurred = true;
+
+            // Пробуем проиграть тихо (на случай, если браузер требует)
+            bgMusic.play().catch(() => {});
+            correctSound.play().catch(() => {});
+            wrongSound.play().catch(() => {});
+
+            // Сразу ставим на паузу, чтобы не играла автоматически
+            bgMusic.pause();
+            correctSound.pause();
+            wrongSound.pause();
+        }
+
+        // Вешаем инициализацию на весь body (любой клик — жест пользователя)
+        document.body.addEventListener('click', initAudio, { once: true });
+        document.body.addEventListener('touchstart', initAudio, { once: true });
+
+        // Переключение звука
+        document.getElementById('soundBtn').addEventListener('click', function () {
+            const isMuted = this.textContent === '🔇';
+            this.textContent = isMuted ? '🔊' : '🔇';
+            const muteState = !isMuted;
+            bgMusic.muted = muteState;
+            correctSound.muted = muteState;
+            wrongSound.muted = muteState;
+        });
+
+        // Управление фоновой музыкой
+        document.getElementById('playbtn').addEventListener('click', function () {
+            if (bgMusic.paused) {
+                if (!userGestureOccurred) {
+                    // Если по какой-то причине инициализация не сработала — принудительно
+                    initAudio();
+                }
+                bgMusic.play().catch(err => console.warn("Не удалось включить музыку:", err));
+                this.textContent = "⏸️";
+            } else {
+                bgMusic.pause();
+                this.textContent = "▶️";
+            }
+        });
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>
