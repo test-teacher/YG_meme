@@ -1,12 +1,7 @@
 class MemeQuizGame {
     constructor() {
-        this.currentLevel = 1;
-        this.lives = 3;
         this.totalLevels = 50;
-        this.gameOver = false;
-        this.currentQuestion = null;
-         this.hintUsedThisLevel = false; 
-        
+
         this.memes = [
             { //1
                 image: "./img/meme-img/Мемы. 1-10/1.Surprise Motherfucka.jpg",
@@ -44,7 +39,7 @@ class MemeQuizGame {
                 options: ["Очень плохая музыка", "Очень хорошая музыка", "Очень современная музыка", "Очень танцевальная музыка"]
             },
             { //8
-                image: "/img/meme-img/Мемы. 1-10/8.Пацан к успеху шел.png",
+                image: "./img/meme-img/Мемы. 1-10/8.Пацан к успеху шел.png",
                 correct: "Пацан к успеху шел",
                 options: ["Пацан к успеху шел", "Реальные пацаны", "Идущие к реке", "Вот так вот"]
             },
@@ -94,12 +89,12 @@ class MemeQuizGame {
                 options: ["Желтый - это значит солнце", "Синий - это значит небо", "Коричневый - это значит земля", "Красный - это значит красивый"]
             },
             { //18
-                image: "/img/meme-img/Мемы. 11-20/18.Никакого праздника.jpg",
+                image: "./img/meme-img/Мемы. 11-20/18.Никакого праздника.jpg",
                 correct: "Никакого праздника",
                 options: ["Никакого праздника", "Ну ты баклажан", "Бегай там, кружись", "Адвокат"]
             },
              { //19
-                image: "/img/meme-img/Мемы. 11-20/19.Пацаны вообще ребята.jpg",
+                image: "./img/meme-img/Мемы. 11-20/19.Пацаны вообще ребята.jpg",
                 correct: "Пацаны вообще ребята",
                 options: ["Пацаны вообще ребята", "Игорёк, вызывай прокуратуру", "Я в натуре в шоке", "Пацаны, берегите себя"]
             },
@@ -259,22 +254,25 @@ class MemeQuizGame {
                 correct: "Вы чё, угараете",
                 options: ["Вы чё, угараете", "Куда вы меня тащите", "Всего хо-ро-шего", "А почему он, а не я?"]
             },
-            
-        
-            
         ];
-        
+
+        this.oneLoad = 0;
         this.initializeGame();
-        this.eventListenersSetup = false; // флаг
-        this.initializeGame();
+        this.eventListenersSetup = false;
     }
     
     initializeGame() {
         this.currentLevel = 1;
         this.lives = 3;
         this.gameOver = false;
-        this.hintUsed = false; //сбрасываем подсказку при рестарте
-        this.showLoadingScreen();
+        this.hintUsed = false;
+        this.usedMemeIndices = new Set();
+        if (this.oneLoad == 0){
+            this.showLoadingScreen();
+        }
+        else{
+            this.startGame();
+        }
     }
     
     showLoadingScreen() {
@@ -286,13 +284,13 @@ class MemeQuizGame {
         loadingScreen.style.display = 'flex';
         gameContainer.style.display = 'none';
         
-        // Симуляция загрузки
         let progress = 0;
         const loadingInterval = setInterval(() => {
             progress += Math.random() * 15;
             if (progress >= 100) {
                 progress = 100;
                 clearInterval(loadingInterval);
+                this.oneLoad = 1;
                 
                 setTimeout(() => {
                     this.hideLoadingScreen();
@@ -318,13 +316,13 @@ class MemeQuizGame {
     }
     
     startGame() {
-    this.updateDisplay();
-    this.loadQuestion();
-    if (!this.eventListenersSetup) {
-        this.setupEventListeners();
-        this.eventListenersSetup = true;
+        this.updateDisplay();
+        this.loadQuestion();
+        if (!this.eventListenersSetup) {
+            this.setupEventListeners();
+            this.eventListenersSetup = true;
+        }
     }
-}
     
     setupEventListeners() {
         const answerButtons = document.querySelectorAll('.answer-btn');
@@ -338,88 +336,76 @@ class MemeQuizGame {
         restartBtn.addEventListener('click', () => this.restartGame());
         victoryRestartBtn.addEventListener('click', () => this.restartGame());
         
-
-         // Реализуем подсказки
         document.getElementById('hintBtn').addEventListener('click', () => {
-    if (this.hintUsedThisLevel || !this.currentQuestion) return;
+            if (this.hintUsedThisLevel || !this.currentQuestion) return;
 
-    const answerButtons = document.querySelectorAll('.answer-btn');
-    const correctText = this.currentQuestion.correct;
+            const answerButtons = document.querySelectorAll('.answer-btn');
+            const correctText = this.currentQuestion.correct;
 
-    // Находим неправильные кнопки
-    const wrongButtons = Array.from(answerButtons).filter(btn => btn.textContent !== correctText);
+            const wrongButtons = Array.from(answerButtons).filter(btn => btn.textContent !== correctText);
 
-    // Выбираем 2 случайных неправильных и скрываем их текст
-    const shuffled = [...wrongButtons].sort(() => 0.5 - Math.random());
-    const toHide = shuffled.slice(0, 2);
+            const shuffled = [...wrongButtons].sort(() => 0.5 - Math.random());
+            const toHide = shuffled.slice(0, 2);
 
-    toHide.forEach(btn => {
-        btn.textContent = ''; // или: btn.style.opacity = '0'; или btn.disabled = true;
-    });
+            toHide.forEach(btn => {
+                btn.disabled = true;
+            });
 
-    // Отмечаем, что подсказка использована на этом уровне
-    this.hintUsedThisLevel = true;
-    const hintBtn = document.getElementById('hintBtn');
-    if (hintBtn) {
-        hintBtn.disabled = true;
-        hintBtn.title = "Подсказка уже использована";
-    }
-});
+            this.hintUsedThisLevel = true;
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.disabled = true;
+                hintBtn.title = "Подсказка уже использована";
+            }
+        });
     }
     
     loadQuestion() {
-       if (this.currentLevel > this.totalLevels) {
-        this.showVictory();
-        return;
-    }
+        if (this.currentLevel > this.totalLevels) {
+            this.showVictory();
+            return;
+        }
 
-    // Сбрасываем подсказку для нового уровня
-    this.hintUsedThisLevel = false;
-    const hintBtn = document.getElementById('hintBtn');
-    if (hintBtn) {
-        hintBtn.disabled = false;
-        hintBtn.title = "Использовать подсказку (50/50)";
-    }
+        this.hintUsedThisLevel = false;
+        const hintBtn = document.getElementById('hintBtn');
+        if (hintBtn) {
+            hintBtn.disabled = false;
+            hintBtn.title = "Использовать подсказку (50/50)";
+        }
 
-    // Выбираем случайный мем
-    const randomIndex = Math.floor(Math.random() * this.memes.length);
-    this.currentQuestion = this.memes[randomIndex];
+        const availableIndices = [];
+        for (let i = 0; i < this.memes.length; i++) {
+            if (!this.usedMemeIndices.has(i)) {
+                availableIndices.push(i);
+            }
+        }
 
-    // Обновляем изображение
-    const memeImage = document.getElementById('memeImage');
-    memeImage.src = this.currentQuestion.image;
-    memeImage.alt = 'Мем';
+        if (availableIndices.length === 0) {
+            this.usedMemeIndices.clear();
+            for (let i = 0; i < this.memes.length; i++) {
+                availableIndices.push(i);
+            }
+        }
 
-    // Перемешиваем варианты ответов
-    const shuffledOptions = [...this.currentQuestion.options].sort(() => Math.random() - 0.5);
+        const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        this.usedMemeIndices.add(randomIndex);
+        this.currentQuestion = this.memes[randomIndex];
 
-    // Обновляем кнопки
-    const answerButtons = document.querySelectorAll('.answer-btn');
-    answerButtons.forEach((btn, index) => {
-        btn.textContent = shuffledOptions[index];
-        btn.className = 'answer-btn';
-        btn.disabled = false;
-    });
+        const memeImage = document.getElementById('memeImage');
+        memeImage.src = this.currentQuestion.image;
+        memeImage.alt = 'Мем';
 
-    this.updateDisplay();
+        const shuffledOptions = [...this.currentQuestion.options].sort(() => Math.random() - 0.5);
+        const answerButtons = document.querySelectorAll('.answer-btn');
+        answerButtons.forEach((btn, index) => {
+            btn.textContent = shuffledOptions[index];
+            btn.className = 'answer-btn';
+            btn.disabled = false;
+        });
+
+        this.updateDisplay();
     }
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     handleAnswer(event) {
         if (this.gameOver) return;
         const selectedAnswer = event.target.textContent;
@@ -427,56 +413,50 @@ class MemeQuizGame {
         const correctAnswerSample = document.querySelector("#correct-answer-sample");
         const wrongAnswerSample = document.querySelector("#wrong-answer-sample");
         
-        // Отключаем все кнопки
         answerButtons.forEach(btn => btn.disabled = true);
 
         const music = document.querySelector("#soundOn");
-         // Правильный ответ
         if (selectedAnswer === this.currentQuestion.correct) {
-            
-             // Визуальные фанфары
-    const visualFanfare = document.getElementById('visual-fanfare');
-    visualFanfare.style.display = 'flex';
-    // Автоматически скрыть после анимации
-    setTimeout(() => {
-        visualFanfare.style.display = 'none';
-    }, 1200); // чуть дольше анимации
+            const visualFanfare = document.getElementById('visual-fanfare');
+            visualFanfare.style.display = 'flex';
+            setTimeout(() => {
+                visualFanfare.style.display = 'none';
+            }, 1200); 
 
-            correctAnswerSample.play(); // Включаем джингл правильного ответа
-            music.pause(); // Ставим музыку на паузу
-           setTimeout( function () { 
-            if (music && userEnabledMusic == true) {
-        music.currentTime = 0; // Переводим проигрыватель на 0 секунду и запускаем музыку.
-        music.play(); // Включаем музыку через 1500 мс
-            }
-        }, 1500);
+            correctAnswerSample.play(); 
+            music.pause();
+            setTimeout( function () { 
+                if (music && userEnabledMusic == true) {
+                    music.currentTime = 0; 
+                    music.play(); 
+                }
+            }, 1500);
 
-            event.target.classList.add('correct'); // Подсвечиваем правильный ответ зеленым
+            event.target.classList.add('correct'); 
             setTimeout(() => {
                 this.nextLevel();
             }, 1500);
 
-        } else {
-            // Неправильный ответ
-            wrongAnswerSample.play(); // Включаем джингл неправильного ответа
-            music.pause(); // Ставим музыку на паузу
-           setTimeout( function () { 
-            if (music && userEnabledMusic == true) {
-        music.currentTime = 0; // Переводим проигрыватель на 0 секунду и запускаем музыку.
-        music.play(); // Включаем музыку через 1500 мс
-            }
-        }, 1500);
+        } 
+        else {
+            wrongAnswerSample.play(); 
+            music.pause(); 
+            setTimeout( function () { 
+                if (music && userEnabledMusic == true) {
+                    music.currentTime = 0; 
+                    music.play(); 
+                }
+            }, 1500);
 
-            event.target.classList.add('wrong'); // Подсвечиваем неправильный ответ красным
-            // Показываем правильный ответ
+            event.target.classList.add('wrong'); 
             answerButtons.forEach(btn => {
                 if (btn.textContent === this.currentQuestion.correct) {
                     btn.classList.add('correct');
                 }
             });
-            
+                
             this.loseLife();
-            
+                
             setTimeout(() => {
                 if (this.lives > 0) {
                     this.nextLevel();
@@ -486,18 +466,18 @@ class MemeQuizGame {
             }, 2000);
         }
     }
-    
+        
     loseLife() {
         this.lives--;
         const hearts = document.querySelectorAll('.heart');
         hearts[this.lives].classList.add('lost');
     }
-    
+        
     nextLevel() {
         this.currentLevel++;
         this.loadQuestion();
     }
-    
+        
     updateDisplay() {
         document.getElementById('currentLevel').textContent = this.currentLevel;
         document.getElementById('totalLevels').textContent = this.totalLevels;
@@ -509,30 +489,46 @@ class MemeQuizGame {
         document.getElementById('gameOver').style.display = 'block';
         document.querySelector('.game-area').style.display = 'none';
     }
-    
+        
     showVictory() {
         this.gameOver = true;
         document.getElementById('victory').style.display = 'block';
         document.querySelector('.game-area').style.display = 'none';
     }
-    
+        
     restartGame() {
         document.getElementById('gameOver').style.display = 'none';
         document.getElementById('victory').style.display = 'none';
         document.querySelector('.game-area').style.display = 'block';
         
-
-        
-        // Восстанавливаем все сердечки
         const hearts = document.querySelectorAll('.heart');
         hearts.forEach(heart => heart.classList.remove('lost'));
         this.initializeGame();
     }
-
-    
 }
 
-// Инициализация игры при загрузке страницы
+let gameInstance = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    new MemeQuizGame();
+    const startScreen = document.getElementById('startScreen');
+    const startBtn = document.getElementById('startBtn');
+    const bgMusic = document.getElementById('soundOn');
+
+    startBtn.addEventListener('click', () => {
+
+        startScreen.style.display = 'none';
+
+        if (bgMusic) {
+            bgMusic.play().then(() => {
+                userEnabledMusic = true;
+                document.getElementById('playbtn').textContent = "⏸️"; 
+            }).catch(err => {
+                console.warn("Не удалось включить музыку:", err);
+                userEnabledMusic = false;
+            });
+        }
+
+        gameInstance = new MemeQuizGame();
+        gameInstance.startFullGame();
+    });
 });
